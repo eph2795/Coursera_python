@@ -36,8 +36,8 @@ def process_data(data):
     except ValueError:
         return 'error\nwrong command\n\n'
     payload = payload.strip()
-    # print('Command: "{}"'.format(command))
-    # print('Payload: "{}"'.format(payload))
+    if not payload:
+        return 'error\nwrong command\n\n'
     if command == 'put':
         try:
             metric, value, timestamp = payload.split(' ')
@@ -49,6 +49,8 @@ def process_data(data):
         MetricsStorage.put(metric, value, timestamp)
         return 'ok\n\n'
     elif command == 'get':
+        if len(payload.split()) > 1:
+            return 'error\nwrong command\n\n'
         metrics = MetricsStorage.get(payload)
         if metrics:
             response = ['{} {} {}'.format(metric, value, timestamp)
