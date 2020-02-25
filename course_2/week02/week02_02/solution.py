@@ -20,10 +20,10 @@ def draw_help(gameDisplay, steps):
         [str(steps), "Current points"]
     ]
     pygame.draw.lines(gameDisplay,
-                      color=(255, 50, 50, 255),
-                      closed=True,
-                      pointlist=[(0, 0), (800, 0), (800, 600), (0, 600)],
-                      width=5)
+                      (255, 50, 50, 255),
+                      True,
+                      [(0, 0), (800, 0), (800, 600), (0, 600)],
+                      5)
     for i, text in enumerate(data):
         gameDisplay.blit(font1.render(
             text[0], True, (128, 128, 255)), (100, 100 + 30 * i))
@@ -46,7 +46,7 @@ class Vec2d:
     def __mul__(self, k):
         return Vec2d(k * self.x, k * self.y)
 
-    def len(self):
+    def __len__(self):
         return math.sqrt(self.x * self.x + self.y * self.y)
 
     def int_pair(self):
@@ -72,22 +72,26 @@ class Polyline:
         self.points.append(point)
         self.speeds.append(speed)
 
-    def set_points(self):
+    def restart(self):
+        self.points = []
+        self.speeds = []
+
+    def set_points(self, screen_dims):
         for i, (point, speed) in enumerate(zip(self.points, self.speeds)):
             moved_point = point + speed
             reflected_speed = speed
 
             x_point, y_point = moved_point.pair()
             x_speed, y_speed = speed.pair()
-            if (x_point >= SCREEN_DIM[0]) or (x_point <= 0):
+            if (x_point >= screen_dims[0]) or (x_point <= 0):
                 reflected_speed = Vec2d(-x_speed, y_speed)
-            if (y_point >= SCREEN_DIM[1]) or (y_point <= 0):
+            if (y_point >= screen_dims[1]) or (y_point <= 0):
                 reflected_speed = Vec2d(x_speed, -y_speed)
             self.points[i] = moved_point
             self.speeds[i] = reflected_speed
 
     @staticmethod
-    def draw_points(points_, style="points", width=3, color_=(255, 255, 255)):
+    def draw_points(points_, gameDisplay, style="points", width=3, color_=(255, 255, 255)):
         if style == "line":
             for p_n in range(-1, len(points_) - 1):
                 pygame.draw.line(gameDisplay, color_,
@@ -159,12 +163,12 @@ class Knot(Polyline):
         super().add_point(point, speed)
         self.knot_points = self.get_knot()
 
-    def set_points(self):
-        super().set_points()
+    def set_points(self, screen_dims):
+        super().set_points(screen_dims)
         self.knot_points = self.get_knot()
 
 
-if __name__ == "__main__":
+def main():
     pygame.init()
     gameDisplay = pygame.display.set_mode(SCREEN_DIM)
     pygame.display.set_caption("MyScreenSaver")
@@ -185,8 +189,7 @@ if __name__ == "__main__":
                 if event.key == pygame.K_ESCAPE:
                     working = False
                 if event.key == pygame.K_r:
-                    points = []
-                    speeds = []
+                    knot.restart()
                 if event.key == pygame.K_p:
                     pause = not pause
                 if event.key == pygame.K_KP_PLUS:
@@ -205,9 +208,9 @@ if __name__ == "__main__":
         color.hsla = (hue, 100, 50, 100)
 
         if not pause:
-            knot.set_points()
-        knot.draw_points(knot.get_points())
-        knot.draw_points(knot.get_knot(), style="line", width=3, color_=color)
+            knot.set_points(SCREEN_DIM)
+        knot.draw_points(knot.get_points(), gameDisplay)
+        knot.draw_points(knot.get_knot(), gameDisplay, style="line", width=3, color_=color)
 
         if show_help:
             draw_help(gameDisplay, knot.get_smoothing_points_number())
@@ -216,3 +219,7 @@ if __name__ == "__main__":
     pygame.display.quit()
     pygame.quit()
     exit(0)
+
+
+if __name__ == "__main__":
+    main()
